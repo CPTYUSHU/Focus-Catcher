@@ -69,3 +69,11 @@ Thumbs.db
 # Focus Catcher specific
 focus_catcher.db
 
+# Development files
+.cursorrules
+pdb
+docs/
+tests/
+scripts/
+chrome-extension/test-page.html
+
