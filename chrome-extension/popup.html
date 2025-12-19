@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Catcher</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      backdrop-filter: blur(10px);
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .shortcut {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .key {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Focus Catcher</h1>
+  <p class="subtitle">快速捕捉学习内容</p>
+
+  <div class="section">
+    <div class="section-title">📌 使用方法</div>
+    <div class="shortcut">
+      <span>1. 选中文字</span>
+    </div>
+    <div class="shortcut">
+      <span>2. 按</span>
+      <span class="key">⌘ Cmd</span>
+      <span>+</span>
+      <span class="key">⇧ Shift</span>
+      <span>+</span>
+      <span class="key">C</span>
+    </div>
+    <div class="shortcut">
+      <span>3. 完成！✨</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📊 今日统计</div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="todayCaptures">-</div>
+        <div class="stat-label">捕捉数</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="todaySessions">-</div>
+        <div class="stat-label">会话数</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="button" id="viewHistory">
+    📝 查看历史记录
+  </button>
+
+  <button class="button" id="openSettings" style="margin-top: 10px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);">
+    ⚙️ 设置
+  </button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+

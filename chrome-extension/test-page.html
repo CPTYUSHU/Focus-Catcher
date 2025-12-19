@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Catcher - 测试页面</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+
+    .test-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #667eea;
+    }
+
+    .test-content {
+      line-height: 1.8;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .log {
+      margin-top: 20px;
+      padding: 15px;
+      background: #2d3748;
+      color: #a0aec0;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+    }
+
+    .log-success {
+      color: #48bb78;
+    }
+
+    .log-error {
+      color: #f56565;
+    }
+
+    .log-info {
+      color: #4299e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Focus Catcher 测试页面</h1>
+    <p class="subtitle">测试插件在不同网页上的运行情况</p>
+
+    <!-- 测试 1：Content Script 加载 -->
+    <div class="test-section">
+      <div class="test-title">测试 1：Content Script 是否加载</div>
+      <div class="test-content">
+        插件的 content script 应该在所有网页上自动加载。
+      </div>
+      <div>
+        状态：<span id="status1" class="status status-pending">检测中...</span>
+      </div>
+    </div>
+
+    <!-- 测试 2：快捷键监听 -->
+    <div class="test-section">
+      <div class="test-title">测试 2：快捷键监听</div>
+      <div class="test-content">
+        选中下面的文字，然后按快捷键（Cmd+Shift+C 或你设置的快捷键）：<br><br>
+        <strong>这是一段测试文字。请选中这段文字并按快捷键进行捕捉。</strong>
+      </div>
+      <div>
+        状态：<span id="status2" class="status status-pending">等待测试...</span>
+      </div>
+    </div>
+
+    <!-- 测试 3：后端连接 -->
+    <div class="test-section">
+      <div class="test-title">测试 3：后端 API 连接</div>
+      <div class="test-content">
+        测试是否能够连接到 FastAPI 后端。
+      </div>
+      <button class="button" onclick="testBackend()">🔗 测试后端连接</button>
+      <div style="margin-top: 10px;">
+        状态：<span id="status3" class="status status-pending">未测试</span>
+      </div>
+    </div>
+
+    <!-- 测试 4：完整捕捉流程 -->
+    <div class="test-section">
+      <div class="test-title">测试 4：完整捕捉流程</div>
+      <div class="test-content">
+        测试从选中文字到保存到数据库的完整流程。
+      </div>
+      <button class="button" onclick="testFullCapture()">🎯 测试完整捕捉</button>
+      <div style="margin-top: 10px;">
+        状态：<span id="status4" class="status status-pending">未测试</span>
+      </div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="log" id="log">
+      <div class="log-entry log-info">[INFO] 测试页面已加载</div>
+    </div>
+  </div>
+
+  <script>
+    // 日志函数
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // 更新状态
+    function updateStatus(id, text, type) {
+      const status = document.getElementById(id);
+      status.textContent = text;
+      status.className = `status status-${type}`;
+    }
+
+    // 测试 1：检测 Content Script
+    setTimeout(() => {
+      // 检查是否有 focus-catcher 相关的元素或全局变量
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        log('[TEST 1] Chrome extension API 可用', 'success');
+        updateStatus('status1', '✅ Content Script 已加载', 'success');
+      } else {
+        log('[TEST 1] Chrome extension API 不可用', 'error');
+        updateStatus('status1', '❌ Content Script 未加载', 'error');
+      }
+    }, 500);
+
+    // 测试 2：监听捕捉事件
+    let captureAttempted = false;
+    document.addEventListener('selectionchange', () => {
+      const selection = window.getSelection().toString();
+      if (selection && selection.length > 10) {
+        if (!captureAttempted) {
+          log('[TEST 2] 检测到文字选中，请按快捷键', 'info');
+          captureAttempted = true;
+        }
+      }
+    });
+
+    // 测试 3：测试后端连接
+    async function testBackend() {
+      log('[TEST 3] 正在测试后端连接...', 'info');
+      updateStatus('status3', '⏳ 测试中...', 'pending');
+      
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api');
+        const data = await response.json();
+        
+        if (data.status === 'ok') {
+          log('[TEST 3] ✅ 后端连接成功', 'success');
+          updateStatus('status3', '✅ 后端连接正常', 'success');
+        } else {
+          log('[TEST 3] ❌ 后端响应异常', 'error');
+          updateStatus('status3', '❌ 后端响应异常', 'error');
+        }
+      } catch (error) {
+        log(`[TEST 3] ❌ 后端连接失败: ${error.message}`, 'error');
+        updateStatus('status3', '❌ 无法连接后端', 'error');
+      }
+    }
+
+    // 测试 4：测试完整捕捉流程
+    async function testFullCapture() {
+      log('[TEST 4] 正在测试完整捕捉流程...', 'info');
+      updateStatus('status4', '⏳ 测试中...', 'pending');
+      
+      const testData = {
+        selected_text: '这是一段测试文字，用于验证捕捉功能是否正常工作。',
+        page_url: window.location.href,
+        page_title: document.title
+      };
+      
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/focus/capture', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(testData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          log('[TEST 4] ✅ 捕捉成功！', 'success');
+          log(`[TEST 4] Session ID: ${data.session_id}, Capture ID: ${data.capture_id}`, 'info');
+          updateStatus('status4', '✅ 捕捉流程正常', 'success');
+          updateStatus('status2', '✅ 快捷键应该可以工作', 'success');
+        } else {
+          log('[TEST 4] ❌ 捕捉失败', 'error');
+          updateStatus('status4', '❌ 捕捉流程异常', 'error');
+        }
+      } catch (error) {
+        log(`[TEST 4] ❌ 捕捉失败: ${error.message}`, 'error');
+        updateStatus('status4', '❌ 捕捉流程异常', 'error');
+      }
+    }
+
+    // 自动运行测试 3
+    setTimeout(() => {
+      testBackend();
+    }, 1000);
+  </script>
+</body>
+</html>
+

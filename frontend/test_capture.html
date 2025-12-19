@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Catcher - 捕捉测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: #10B981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.error {
+            background: #EF4444;
+        }
+        
+        .response-time {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #3B82F6;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">🎯 Focus Catcher</h1>
+            <p class="text-gray-400">测试捕捉体验 - 目标：< 200ms 响应</p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-3">📋 测试说明</h2>
+            <ol class="list-decimal list-inside space-y-2 text-gray-300">
+                <li>在下方文本框中输入你想"捕捉"的文字（模拟选中文字）</li>
+                <li>点击"捕捉"按钮或按 <kbd class="px-2 py-1 bg-gray-700 rounded">Cmd+Enter</kbd></li>
+                <li>观察响应时间是否足够快（目标 < 200ms）</li>
+                <li>体验是否"丝滑"、"零打断"</li>
+            </ol>
+        </div>
+
+        <!-- Capture Form -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">✨ 捕捉区域</h2>
+            
+            <div class="space-y-4">
+                <!-- Selected Text -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">选中的文字</label>
+                    <textarea 
+                        id="selectedText" 
+                        class="w-full bg-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        rows="4"
+                        placeholder="在这里输入你想捕捉的文字..."
+                    ></textarea>
+                </div>
+
+                <!-- Page URL (auto-filled) -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">页面 URL（自动填充）</label>
+                    <input 
+                        type="text" 
+                        id="pageUrl" 
+                        class="w-full bg-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        readonly
+                    />
+                </div>
+
+                <!-- Page Title (auto-filled) -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">页面标题（自动填充）</label>
+                    <input 
+                        type="text" 
+                        id="pageTitle" 
+                        class="w-full bg-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        readonly
+                    />
+                </div>
+
+                <!-- Capture Button -->
+                <button 
+                    id="captureBtn"
+                    class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
+                >
+                    🎯 捕捉 (Cmd+Enter)
+                </button>
+
+                <!-- Stats -->
+                <div id="stats" class="grid grid-cols-3 gap-4 mt-4">
+                    <div class="bg-gray-700 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-blue-400" id="captureCount">0</div>
+                        <div class="text-xs text-gray-400">总捕捉数</div>
+                    </div>
+                    <div class="bg-gray-700 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-green-400" id="avgResponseTime">-</div>
+                        <div class="text-xs text-gray-400">平均响应时间</div>
+                    </div>
+                    <div class="bg-gray-700 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-purple-400" id="currentSession">-</div>
+                        <div class="text-xs text-gray-400">当前会话</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capture History -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">📝 捕捉历史</h2>
+                <button 
+                    id="analyzeBtn"
+                    class="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 text-sm"
+                    style="display: none;"
+                >
+                    🤖 AI 分析当前会话
+                </button>
+            </div>
+            <div id="captureHistory" class="space-y-3">
+                <p class="text-gray-400 text-center py-8">还没有捕捉记录</p>
+            </div>
+        </div>
+
+        <!-- AI Analysis Result -->
+        <div id="analysisResult" class="bg-gray-800 rounded-lg p-6 mt-6" style="display: none;">
+            <h2 class="text-xl font-bold mb-4">🤖 AI 分析结果</h2>
+            <div id="analysisContent" class="prose prose-invert max-w-none">
+                <!-- Analysis will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // Auto-fill page info
+        document.getElementById('pageUrl').value = window.location.href;
+        document.getElementById('pageTitle').value = document.title;
+
+        // Stats
+        let captureCount = 0;
+        let responseTimes = [];
+        let currentSessionId = null;
+        let allSessions = [];
+        let allCaptures = [];
+
+        // Capture function
+        async function capture() {
+            const selectedText = document.getElementById('selectedText').value.trim();
+            
+            if (!selectedText) {
+                showToast('请输入要捕捉的文字', 'error');
+                return;
+            }
+
+            const captureBtn = document.getElementById('captureBtn');
+            captureBtn.disabled = true;
+            captureBtn.textContent = '⏳ 捕捉中...';
+
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/focus/capture', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        selected_text: selectedText,
+                        page_url: document.getElementById('pageUrl').value,
+                        page_title: document.getElementById('pageTitle').value
+                    })
+                });
+
+                const responseTime = Date.now() - startTime;
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Update stats
+                responseTimes.push(responseTime);
+                currentSessionId = data.session_id;
+
+                updateStats();
+                
+                showToast(`✅ 捕捉成功！响应时间: ${responseTime}ms`, 'success');
+
+                // Reload history to show the new capture
+                loadAllHistory();
+
+                // Clear input
+                document.getElementById('selectedText').value = '';
+                document.getElementById('selectedText').focus();
+
+            } catch (error) {
+                showToast(`❌ 捕捉失败: ${error.message}`, 'error');
+            } finally {
+                captureBtn.disabled = false;
+                captureBtn.textContent = '🎯 捕捉 (Cmd+Enter)';
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            document.getElementById('captureCount').textContent = captureCount;
+            
+            const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+            document.getElementById('avgResponseTime').textContent = `${avgTime.toFixed(0)}ms`;
+            
+            document.getElementById('currentSession').textContent = currentSessionId || '-';
+        }
+
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // AI Analysis function for specific session
+        async function analyzeSpecificSession(sessionId) {
+            try {
+                showToast('🤖 正在分析会话 #' + sessionId + '...', 'info');
+                
+                const response = await fetch(`http://127.0.0.1:8000/api/focus/analyze/${sessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Show analysis result
+                const analysisResult = document.getElementById('analysisResult');
+                const analysisContent = document.getElementById('analysisContent');
+                
+                // Display as plain text with preserved formatting
+                // Use textContent to avoid HTML injection and preserve line breaks with CSS
+                analysisContent.textContent = data.learning_guide;
+                analysisContent.style.whiteSpace = 'pre-wrap';
+                analysisResult.style.display = 'block';
+
+                // Scroll to analysis
+                analysisResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                showToast('✅ AI 分析完成！', 'success');
+
+            } catch (error) {
+                showToast(`❌ 分析失败: ${error.message}`, 'error');
+            }
+        }
+
+        // AI Analysis function (for current session button)
+        async function analyzeSession() {
+            if (!currentSessionId) {
+                showToast('没有活跃的会话可以分析', 'error');
+                return;
+            }
+            
+            await analyzeSpecificSession(currentSessionId);
+        }
+
+        // Delete session function
+        async function deleteSession(sessionId) {
+            // Confirm before deletion
+            if (!confirm(`确定要删除会话 #${sessionId} 及其所有捕捉记录吗？\n此操作不可恢复！`)) {
+                return;
+            }
+
+            try {
+                showToast('🗑️ 正在删除会话 #' + sessionId + '...', 'info');
+                
+                const response = await fetch(`http://127.0.0.1:8000/api/focus/sessions/${sessionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                showToast('✅ ' + data.message, 'success');
+                
+                // Reload history to reflect changes
+                await loadAllHistory();
+                
+                // If deleted session was the current session, clear current session
+                if (sessionId === currentSessionId) {
+                    currentSessionId = null;
+                    document.getElementById('currentSession').textContent = '-';
+                }
+
+            } catch (error) {
+                showToast(`❌ 删除失败: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('captureBtn').addEventListener('click', capture);
+        document.getElementById('analyzeBtn').addEventListener('click', analyzeSession);
+
+        document.getElementById('selectedText').addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                capture();
+            }
+        });
+
+        // Load all history on page load
+        async function loadAllHistory() {
+            try {
+                // Get all sessions
+                const sessionsResponse = await fetch('http://127.0.0.1:8000/api/focus/sessions');
+                const sessionsData = await sessionsResponse.json();
+                allSessions = sessionsData.sessions;
+
+                // Get captures for all sessions
+                const historyContainer = document.getElementById('captureHistory');
+                historyContainer.innerHTML = '';
+
+                if (allSessions.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-gray-400 text-center py-8">还没有捕捉记录</p>';
+                    return;
+                }
+
+                // Load captures for each session
+                for (const session of allSessions) {
+                    const capturesResponse = await fetch(`http://127.0.0.1:8000/api/focus/captures/${session.id}`);
+                    const capturesData = await capturesResponse.json();
+                    
+                    if (capturesData.captures.length > 0) {
+                        // Add session header
+                        const sessionHeader = document.createElement('div');
+                        sessionHeader.className = 'mb-4 mt-6 first:mt-0';
+                        // Session title with analyze button
+                        const sessionTitleDiv = document.createElement('div');
+                        sessionTitleDiv.className = 'flex items-center justify-between mb-3';
+                        
+                        sessionTitleDiv.innerHTML = `
+                            <div class="flex items-center gap-3 flex-1">
+                                <div class="h-px flex-1 bg-gray-700"></div>
+                                <div class="text-sm text-gray-400">
+                                    📚 会话 #${session.id} 
+                                    <span class="text-xs">(${capturesData.captures.length} 条捕捉)</span>
+                                </div>
+                                <div class="h-px flex-1 bg-gray-700"></div>
+                            </div>
+                        `;
+                        
+                        // Add button container
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'flex items-center gap-2';
+                        
+                        // Add analyze button if session has >= 5 captures
+                        if (capturesData.captures.length >= 5) {
+                            const analyzeBtn = document.createElement('button');
+                            analyzeBtn.className = 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-1 px-3 rounded-lg transition-all duration-200 transform hover:scale-105 text-xs whitespace-nowrap';
+                            analyzeBtn.textContent = '🤖 AI 分析';
+                            analyzeBtn.onclick = () => analyzeSpecificSession(session.id);
+                            buttonContainer.appendChild(analyzeBtn);
+                        }
+                        
+                        // Add delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-lg transition-all duration-200 text-xs whitespace-nowrap';
+                        deleteBtn.textContent = '🗑️ 删除';
+                        deleteBtn.onclick = () => deleteSession(session.id);
+                        buttonContainer.appendChild(deleteBtn);
+                        
+                        sessionTitleDiv.appendChild(buttonContainer);
+                        sessionHeader.appendChild(sessionTitleDiv);
+                        historyContainer.appendChild(sessionHeader);
+
+                        // Add captures for this session (reverse to show newest first)
+                        capturesData.captures.reverse().forEach(capture => {
+                            const historyItem = document.createElement('div');
+                            historyItem.className = 'bg-gray-700 rounded-lg p-4 mb-3';
+                            
+                            const captureTime = new Date(capture.timestamp);
+                            const timeStr = captureTime.toLocaleString('zh-CN', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+
+                            historyItem.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-sm text-gray-400">#${capture.id}</span>
+                                    <span class="text-xs text-gray-500">${timeStr}</span>
+                                </div>
+                                <p class="text-white text-sm leading-relaxed">${capture.selected_text.substring(0, 150)}${capture.selected_text.length > 150 ? '...' : ''}</p>
+                                ${capture.page_title ? `<div class="text-xs text-gray-500 mt-2">📄 ${capture.page_title}</div>` : ''}
+                            `;
+
+                            historyContainer.appendChild(historyItem);
+                        });
+                    }
+                }
+
+                // Update stats
+                const totalCaptures = allSessions.reduce((sum, s) => sum + s.capture_count, 0);
+                captureCount = totalCaptures;
+                document.getElementById('captureCount').textContent = totalCaptures;
+
+                // Set current session
+                if (allSessions.length > 0 && allSessions[0].status === 'active') {
+                    currentSessionId = allSessions[0].id;
+                    document.getElementById('currentSession').textContent = currentSessionId;
+                    
+                    // Show analyze button if session has >= 5 captures
+                    if (allSessions[0].capture_count >= 5) {
+                        document.getElementById('analyzeBtn').style.display = 'block';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Failed to load history:', error);
+                const historyContainer = document.getElementById('captureHistory');
+                historyContainer.innerHTML = '<p class="text-red-400 text-center py-8">加载历史记录失败</p>';
+            }
+        }
+
+        // Initialize on page load
+        loadAllHistory();
+
+        // Focus on text area
+        document.getElementById('selectedText').focus();
+    </script>
+</body>
+</html>
+
